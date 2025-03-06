@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware  # Import CORS middleware
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -6,7 +7,16 @@ import io
 
 app = FastAPI()
 
-# Charger le modèle
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# Load the model
 model = tf.keras.models.load_model("models/emotion_model.h5")
 emotions = ["Colère", "Dégoût", "Peur", "Joie", "Tristesse", "Surprise", "Neutre"]
 
