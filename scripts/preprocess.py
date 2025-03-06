@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from sklearn.utils import class_weight
 
 # Define dataset paths
 DATASET_DIR = "dataset"
@@ -20,6 +21,7 @@ emotion_labels = sorted(os.listdir(TRAIN_DIR))  # ["angry", "disgust", "fear", .
 def load_and_preprocess_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Convert to grayscale
     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))  # Resize to 48x48
+    img = cv2.equalizeHist(img)  # Apply histogram equalization
     img = img.astype("float32") / 255.0  # Normalize pixel values
     img = np.expand_dims(img, axis=-1)  # Add channel dimension (48,48,1)
     return img
@@ -27,11 +29,11 @@ def load_and_preprocess_image(image_path):
 # Create ImageDataGenerator for augmentation
 train_datagen = ImageDataGenerator(
     rescale=1./255,  # Normalize pixel values
-    rotation_range=15,  # Rotate images randomly
-    width_shift_range=0.1,  # Shift images horizontally
-    height_shift_range=0.1,  # Shift images vertically
-    shear_range=0.1,  # Shear transformation
-    zoom_range=0.1,  # Zoom in and out
+    rotation_range=20,  # Rotate images randomly
+    width_shift_range=0.2,  # Shift images horizontally
+    height_shift_range=0.2,  # Shift images vertically
+    shear_range=0.2,  # Shear transformation
+    zoom_range=0.2,  # Zoom in and out
     horizontal_flip=True,  # Flip images horizontally
     fill_mode="nearest"  # Fill missing pixels
 )
@@ -54,6 +56,14 @@ test_generator = test_datagen.flow_from_directory(
     batch_size=BATCH_SIZE,
     class_mode="categorical"
 )
+
+# Calculate class weights to handle imbalanced data
+class_weights = class_weight.compute_class_weight(
+    'balanced',
+    np.unique(train_generator.classes),
+    train_generator.classes
+)
+class_weights_dict = dict(enumerate(class_weights))
 
 # Save processed dataset (if needed)
 def save_preprocessed_data():
