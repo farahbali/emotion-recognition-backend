@@ -11,36 +11,27 @@ TRAIN_DIR = os.path.join(DATASET_DIR, "train")
 TEST_DIR = os.path.join(DATASET_DIR, "test")
 
 # Image properties
-IMG_SIZE = 48  # Target image size (48x48)
+IMG_SIZE = 48
 BATCH_SIZE = 32
 
 # Define emotion categories based on dataset structure
 emotion_labels = sorted(os.listdir(TRAIN_DIR))  # ["angry", "disgust", "fear", ...]
 
-# Function to load and preprocess images
-def load_and_preprocess_image(image_path):
-    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Convert to grayscale
-    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))  # Resize to 48x48
-    img = cv2.equalizeHist(img)  # Apply histogram equalization
-    img = img.astype("float32") / 255.0  # Normalize pixel values
-    img = np.expand_dims(img, axis=-1)  # Add channel dimension (48,48,1)
-    return img
-
-# Create ImageDataGenerator for augmentation
+# Data Augmentation
 train_datagen = ImageDataGenerator(
-    rescale=1./255,  # Normalize pixel values
-    rotation_range=20,  # Rotate images randomly
-    width_shift_range=0.2,  # Shift images horizontally
-    height_shift_range=0.2,  # Shift images vertically
-    shear_range=0.2,  # Shear transformation
-    zoom_range=0.2,  # Zoom in and out
-    horizontal_flip=True,  # Flip images horizontally
-    fill_mode="nearest"  # Fill missing pixels
+    rescale=1./255,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    fill_mode="nearest"
 )
 
-test_datagen = ImageDataGenerator(rescale=1./255)  # No augmentation for test data
+test_datagen = ImageDataGenerator(rescale=1./255)
 
-# Load data from directories
+# Load training & test data
 train_generator = train_datagen.flow_from_directory(
     TRAIN_DIR,
     target_size=(IMG_SIZE, IMG_SIZE),
@@ -57,11 +48,11 @@ test_generator = test_datagen.flow_from_directory(
     class_mode="categorical"
 )
 
-# Calculate class weights to handle imbalanced data
+# Calculate class weights for imbalanced datasets
 class_weights = class_weight.compute_class_weight(
-    'balanced',
-    np.unique(train_generator.classes),
-    train_generator.classes
+    class_weight='balanced',
+    classes=np.unique(train_generator.classes),
+    y=train_generator.classes
 )
 class_weights_dict = dict(enumerate(class_weights))
 
@@ -75,7 +66,11 @@ def save_preprocessed_data():
         folder_path = os.path.join(TRAIN_DIR, emotion)
         for filename in os.listdir(folder_path):
             img_path = os.path.join(folder_path, filename)
-            img = load_and_preprocess_image(img_path)
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+            img = cv2.equalizeHist(img)  # Apply histogram equalization
+            img = img.astype("float32") / 255.0
+            img = np.expand_dims(img, axis=-1)
             X_train.append(img)
             y_train.append(emotion_labels.index(emotion))
 
@@ -84,7 +79,11 @@ def save_preprocessed_data():
         folder_path = os.path.join(TEST_DIR, emotion)
         for filename in os.listdir(folder_path):
             img_path = os.path.join(folder_path, filename)
-            img = load_and_preprocess_image(img_path)
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+            img = cv2.equalizeHist(img)  # Apply histogram equalization
+            img = img.astype("float32") / 255.0
+            img = np.expand_dims(img, axis=-1)
             X_test.append(img)
             y_test.append(emotion_labels.index(emotion))
 
