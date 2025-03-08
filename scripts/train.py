@@ -15,7 +15,7 @@ TEST_DIR = os.path.join(DATASET_DIR, "test")
 
 IMG_SIZE = 48
 BATCH_SIZE = 32
-EPOCHS = 50 
+EPOCHS = 100 
 
 
 emotion_labels = sorted(os.listdir(TRAIN_DIR))  
